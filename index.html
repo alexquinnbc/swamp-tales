@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE SWAMP: A 100-Day Autopsy</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&family=Roboto+Condensed:wght@300;400;700&display=swap');
+
+        :root {
+            --color-light: #f4f4f4;
+            --color-dark: #111111;
+            --color-patriot-red: #B31942;
+            --color-patriot-blue: #0A3161;
+            --color-swamp-green: #4A5C4A;
+            --color-swamp-accent: #d4c965; /* Sickly Yellow */
+            --background-start: #ffffff;
+            --background-end: #0a0e0a;
+            --text-start: #2c3e50;
+            --text-end: #bdc3c7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Roboto Condensed', sans-serif;
+            background-color: var(--background-start);
+            color: var(--text-start);
+            transition: background-color 1s ease, color 1s ease;
+            overflow-x: hidden;
+        }
+        
+        #swamp-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .container { width: 90%; max-width: 1100px; margin: 0 auto; z-index: 2; position: relative; }
+        section { min-height: 100vh; padding: 8rem 0; display: flex; flex-direction: column; justify-content: center; }
+        h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 900; line-height: 1.1; margin-bottom: 1.5rem; text-transform: uppercase; }
+        h1 { font-size: clamp(3rem, 10vw, 6rem); }
+        h2 { font-size: clamp(2rem, 8vw, 4rem); border-left: 5px solid var(--color-patriot-red); padding-left: 20px; transition: border-color 0.5s ease;}
+        h2.swamped { border-color: var(--color-swamp-accent); }
+        p { font-size: 1.2rem; line-height: 1.8; font-weight: 300; max-width: 800px; margin-bottom: 1.5rem; }
+
+        /* HERO SECTION */
+        #hero {
+            text-align: center;
+            justify-content: center;
+        }
+        #hero img {
+            width: 100%; max-width: 500px; margin: 2rem auto;
+            filter: drop-shadow(0px 10px 20px rgba(0,0,0,0.1));
+        }
+
+        /* CORRUPTION CASCADE */
+        #corruption-cascade-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px;
+            margin-top: 3rem;
+        }
+        .cascade-item {
+            aspect-ratio: 1;
+            border: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: scale(0.5);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .cascade-item:hover {
+            transform: scale(1.1) !important;
+            border-color: var(--color-swamp-accent);
+            background-color: rgba(212, 201, 101, 0.1);
+            z-index: 10;
+        }
+        .cascade-item .number {
+            font-size: 2.5rem;
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+        }
+        .cascade-item .summary {
+            font-size: 0.6rem;
+            padding: 0 5px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* INFOGRAPHICS */
+        .infographic {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--color-swamp-green);
+            padding: 2rem;
+            margin-top: 2rem;
+            color: var(--text-end);
+        }
+        .infographic h3 { color: var(--color-swamp-accent); font-size: 1.5rem; }
+
+        /* Quid Pro Quo Chart */
+        .qpa-chart { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; }
+        .qpa-box { border: 1px dashed var(--color-swamp-accent); padding: 1rem; text-align: center; }
+        .qpa-arrow { font-size: 3rem; color: var(--color-swamp-accent); }
+        
+        /* Revolving Door Chart */
+        .revolving-door { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; }
+        .rd-item { text-align: center; }
+        .rd-item img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--color-swamp-green); object-fit: cover; }
+        .rd-item .name { font-weight: 700; margin-top: 0.5rem; }
+        .rd-arrow { font-size: 2rem; color: var(--color-swamp-accent); writing-mode: vertical-rl; transform: rotate(180deg); }
+
+        /* Musk Network Chart */
+        #musk-network { text-align: center; position: relative; padding: 2rem; }
+        #musk-center { width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--color-patriot-red); margin: auto; }
+        .musk-node { position: absolute; width: 100px; text-align: center; font-size: 0.8rem; }
+        /* positions will be set by JS */
+        
+        /* VICTIM FILES */
+        #victim-files {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;
+        }
+        .victim-card {
+            background: #1a1a1a; border: 1px solid #444; padding: 1.5rem; cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .victim-card:hover { transform: translateY(-10px); }
+        .victim-card h3 { font-size: 1.5rem; color: var(--color-swamp-accent); }
+        
+        /* MODAL */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 14, 10, 0.85); backdrop-filter: blur(10px);
+            display: flex; justify-content: center; align-items: center; z-index: 2000;
+            opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        .modal.visible { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: var(--color-dark); color: var(--color-light); padding: 40px;
+            border: 1px solid var(--color-swamp-accent); width: 90%; max-width: 700px;
+            box-shadow: 0 0 50px rgba(212, 201, 101, 0.2); position: relative;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .modal-content::before {
+            content: '//CLASSIFIED: SWAMP_INTEL//'; position: absolute; top: 10px; left: 10px;
+            color: var(--color-swamp-accent); font-size: 0.8rem; letter-spacing: 2px;
+        }
+        .modal-content h3 {
+            font-family: 'Playfair Display', serif; color: var(--color-swamp-accent);
+            font-size: 2rem; margin-bottom: 1rem; border-bottom: 1px solid rgba(212, 201, 101, 0.3); padding-bottom: 0.5rem;
+        }
+        .modal-content p { font-size: 1rem; line-height: 1.7; margin-bottom: 1rem; }
+        .close-button {
+            position: absolute; top: 15px; right: 20px; font-size: 2rem;
+            color: var(--color-light); background: none; border: none; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="swamp-canvas"></canvas>
+
+    <div class="container">
+        
+        <section id="hero">
+            <!-- Image: A pristine photograph of the White House, which will later crack and decay. -->
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/White_House_south_facade.jpg/1280px-White_House_south_facade.jpg" alt="The White House">
+            <h1>The Swamp</h1>
+            <p>An interactive autopsy of 100 days of corruption.</p>
+        </section>
+
+        <section id="the-deluge">
+            <h2 id="deluge-title">The Deluge</h2>
+            <p>It didn't start as a trickle. It was a flood. A daily, unrelenting cascade of actions that warped the very fabric of American government. Below are 100 reported acts of corruption from the first 100 days, as documented by Senators Warren and Murphy. Click any number to see the details.</p>
+            <div id="corruption-cascade-container">
+                <!-- 100 items will be generated here by JavaScript -->
+            </div>
+        </section>
+        
+        <section id="the-mechanisms">
+            <h2 id="mechanisms-title" class="swamped">The Mechanisms of Rot</h2>
+            <p>The corruption wasn't random; it followed a playbook. These are the systems that were exploited, weaponized, and perfected to turn public service into private profit.</p>
+            
+            <div class="infographic" id="qpa-infographic">
+                <h3>Infographic: Quid Pro Quo</h3>
+                <p>A simple, transactional loop: donations in, favors out.</p>
+                <div class="qpa-chart">
+                    <div class="qpa-box"><strong>$1M Donation</strong><br>from Intuit</div>
+                    <div class="qpa-arrow">➜</div>
+                    <div class="qpa-box"><strong>Favorable Action</strong><br>Cancel free tax filing program</div>
+                </div>
+                 <div class="qpa-chart">
+                    <div class="qpa-box"><strong>$4M Donation</strong><br>from GOP Megadonor</div>
+                    <div class="qpa-arrow">➜</div>
+                    <div class="qpa-box"><strong>Favorable Action</strong><br>Nominated as UK Ambassador</div>
+                </div>
+            </div>
+
+            <div class="infographic" id="rd-infographic">
+                <h3>Infographic: The Revolving Door</h3>
+                <p>Appointing industry insiders to regulate the very industries they came from.</p>
+                <div class="revolving-door">
+                    <div class="rd-item">
+                        <!-- Image: Portrait of an oil executive -->
+                        <img src="https://via.placeholder.com/150/555/fff?text=LOBBYIST" alt="Lobbyist">
+                        <div class="name">Big Oil Lobbyist</div>
+                        <div class="role">Industry</div>
+                    </div>
+                    <div class="rd-arrow">➜</div>
+                    <div class="rd-item">
+                        <img src="https://via.placeholder.com/150/333/fff?text=REGULATOR" alt="Regulator">
+                        <div class="name">Head of Agency</div>
+                        <div class="role">Government</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="infographic" id="musk-infographic">
+                <h3>Infographic: The Musk Connection</h3>
+                <p>A web of actions taken to advance the personal and financial interests of a single, powerful ally.</p>
+                <div id="musk-network">
+                    <!-- Image of Elon Musk -->
+                    <img id="musk-center" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Elon_Musk_Colorado_2022_%28cropped2%29.jpg/800px-Elon_Musk_Colorado_2022_%28cropped2%29.jpg" alt="Elon Musk">
+                    <!-- Nodes will be added by JS -->
+                </div>
+            </div>
+        </section>
+
+        <section id="the-victims">
+            <h2 id="victims-title" class="swamped">The Victim Files</h2>
+            <p>Behind every corrupt act is a human cost. These are the watchdogs, regulators, and public servants who were fired, silenced, or sidelined for doing their jobs. Click a file to read their story.</p>
+            <div id="victim-files">
+                <!-- Victim cards will be generated by JS -->
+            </div>
+        </section>
+
+        <section id="the-autopsy">
+            <h2 id="autopsy-title" class="swamped">The Autopsy</h2>
+            <p><strong>BETRAYAL:</strong> The promise to "Drain the Swamp" was betrayed, replaced by a system of monetizing public office for political allies and personal gain.</p>
+            <p><strong>POWER:</strong> The unchecked power of the executive branch was used to fire, intimidate, and reward, dismantling the government's own immune system.</p>
+            <p><strong>CONSEQUENCE:</strong> "This is outlandish, this is illegal, this is unconstitutional, brazen corruption... If this becomes normalized, our democracy will not survive." - Sen. Chris Murphy</p>
+        </section>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <button class="close-button">×</button>
+            <h3 id="modal-title"></h3>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/ScrollTrigger.min.js"></script>
+    <script>
+        // Data Objects (abbreviated for demonstration)
+        const corruptionData = {
+          1: { summary: "Turned White House into a Tesla dealership.", details: "The administration held events on the White House lawn described as a 'very well known advertisement for Tesla,' using taxpayer dollars and the presidential seal to promote a private company." },
+          9: { summary: "Launched crypto memecoin to make millions.", details: "Before inauguration, a Trump-linked memecoin was launched. The value was then inflated by executive orders prioritizing crypto, allowing for massive, untraceable profits laundered through unregulated exchanges." },
+          18: { summary: "Amazon streams 'The Apprentice' for access.", details: "A deal was struck for Amazon to stream Trump's old show, enriching him personally while Amazon was actively seeking tax breaks and other federal benefits." },
+          50: { summary: "Gutted IRS to protect rich tax cheats.", details: "Appointed Treasury Secretary Bessent who began gutting the IRS, laying off thousands of employees to prevent the agency from effectively auditing 'big, giant tax cheats' who were often major donors." },
+          77: { summary: "Sold Ambassadorship for $4M.", details: "Accepted a $4 million inauguration donation from a GOP megadonor and nominated him as UK ambassador on the very same day, sending a clear message that high-level positions were for sale." },
+          79: { summary: "Illegally fired NLRB Chair investigating SpaceX.", details: "The chair of the National Labor Relations Board, Gwen Wilcox, was illegally fired after her agency filed a complaint against Musk's SpaceX, effectively shutting down a key watchdog for labor rights." },
+          95: { summary: "Fired 18 Inspectors General.", details: "In a sweeping move, 18 independent Inspectors General were fired. These officials are the internal 'cops on the beat' for federal agencies, and their removal cleared the way for unchecked corruption." },
+          // ... Add all 100 items here
+        };
+        for(let i=1; i<=100; i++) {
+            if(!corruptionData[i]) {
+                corruptionData[i] = { summary: `Corruption Act #${i}`, details: `Details for corruption act #${i} from the provided sources.`};
+            }
+        }
+
+        const victimData = {
+            ig: { title: 'The 18 Inspectors General', body: `<p>They were the independent watchdogs inside every federal agency... Firing them en masse was the foundational act of impunity.</p>` },
+            osc: { title: 'The Office of Special Counsel', body: `<p>This office is the shield for federal whistleblowers... By firing its head, the administration declared open war on those who expose wrongdoing.</p>` },
+            wilcox: { title: 'Gwen Wilcox, NLRB Chair', body: `<p>Gwen Wilcox wasn't just a name on an org chart. Her crime? Daring to file a complaint against SpaceX for violating labor laws. The reward for her integrity was an illegal termination.</p>` },
+            fda: { title: 'FDA Staffers', body: `<p>These were scientists and medical experts tasked with ensuring new medical devices were safe... Their abrupt termination sent a shockwave through the agency.</p>` },
+        };
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- GENERATE DYNAMIC CONTENT ---
+            const cascadeContainer = document.getElementById('corruption-cascade-container');
+            for (let i = 1; i <= 100; i++) {
+                const item = document.createElement('div');
+                item.className = 'cascade-item';
+                item.dataset.id = i;
+                item.innerHTML = `<div class="number">${i}</div><div class="summary">${corruptionData[i].summary}</div>`;
+                cascadeContainer.appendChild(item);
+            }
+
+            const victimFilesContainer = document.getElementById('victim-files');
+            for(const key in victimData) {
+                const card = document.createElement('div');
+                card.className = 'victim-card';
+                card.dataset.victim = key;
+                card.innerHTML = `<h3>${victimData[key].title}</h3><p>Click to read file...</p>`;
+                victimFilesContainer.appendChild(card);
+            }
+
+            const muskNetwork = document.getElementById('musk-network');
+            const muskNodes = [
+                { text: "Fired EEOC Leaders", angle: 0 }, { text: "Gutted Labor Dept.", angle: 45 },
+                { text: "Fired FAA Admin", angle: 90 }, { text: "$400M Tesla Deal", angle: 135 },
+                { text: "Dropped SpaceX Probe", angle: 180 }, { text: "Fired FDA Staff", angle: 225 },
+                { text: "Golden Dome Contract", angle: 270 }, { text: "Hid Disclosures", angle: 315 },
+            ];
+            muskNodes.forEach(node => {
+                const el = document.createElement('div');
+                el.className = 'musk-node';
+                el.textContent = node.text;
+                const radius = 180;
+                const x = Math.cos(node.angle * Math.PI / 180) * radius + (muskNetwork.offsetWidth / 2 - 50);
+                const y = Math.sin(node.angle * Math.PI / 180) * radius + (muskNetwork.offsetHeight / 2 - 20);
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
+                muskNetwork.appendChild(el);
+            });
+
+
+            // --- GSAP ANIMATIONS ---
+            gsap.registerPlugin(ScrollTrigger);
+
+            // Animate body background color
+            gsap.to('body', {
+                backgroundColor: var(--background-end),
+                color: var(--text-end),
+                scrollTrigger: { trigger: '#the-deluge', start: 'top center', end: 'bottom bottom', scrub: 1.5 }
+            });
+
+            // Animate swamp canvas opacity
+            gsap.to('#swamp-canvas', {
+                opacity: 1,
+                scrollTrigger: { trigger: '#the-deluge', start: 'top center', scrub: 1 }
+            });
+
+            // Animate h2 border color
+            gsap.utils.toArray('h2').forEach(h2 => {
+                ScrollTrigger.create({
+                    trigger: h2,
+                    start: 'top 80%',
+                    onEnter: () => h2.classList.add('swamped'),
+                    onLeaveBack: () => h2.classList.remove('swamped')
+                });
+            });
+
+            // Animate corruption cascade items
+            gsap.to('.cascade-item', {
+                opacity: 1,
+                scale: 1,
+                stagger: 0.02,
+                scrollTrigger: {
+                    trigger: '#corruption-cascade-container',
+                    start: 'top 80%',
+                    end: 'bottom bottom',
+                    scrub: 1
+                }
+            });
+
+            // Animate infographics
+            gsap.from('#qpa-infographic', { y: 100, opacity: 0, scrollTrigger: { trigger: '#qpa-infographic', start: 'top 80%' } });
+            gsap.from('#rd-infographic', { y: 100, opacity: 0, scrollTrigger: { trigger: '#rd-infographic', start: 'top 80%' } });
+            gsap.from('.musk-node', {
+                scale: 0,
+                opacity: 0,
+                stagger: 0.1,
+                scrollTrigger: { trigger: '#musk-infographic', start: 'top 70%' }
+            });
+
+            // --- MODAL LOGIC ---
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const closeModal = document.querySelector('.close-button');
+
+            function openModal(title, body) {
+                modalTitle.textContent = title;
+                modalBody.innerHTML = body;
+                modal.classList.add('visible');
+            }
+
+            document.querySelectorAll('.cascade-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const id = el.dataset.id;
+                    const data = corruptionData[id];
+                    openModal(`Corruption Act #${id}`, `<p>${data.details}</p>`);
+                });
+            });
+
+            document.querySelectorAll('.victim-card').forEach(el => {
+                el.addEventListener('click', () => {
+                    const id = el.dataset.victim;
+                    const data = victimData[id];
+                    openModal(data.title, data.body);
+                });
+            });
+
+            closeModal.addEventListener('click', () => modal.classList.remove('visible'));
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('visible');
+            });
+
+
+            // --- CANVAS SWAMP EFFECT ---
+            const canvas = document.getElementById('swamp-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            
+            function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            class Particle {
+                constructor() { this.reset(); this.y = Math.random() * canvas.height; }
+                reset() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = 0;
+                    this.size = Math.random() * 2 + 1;
+                    this.speedY = Math.random() * 0.5 + 0.2;
+                    this.opacity = Math.random() * 0.5 + 0.3;
+                }
+                update() {
+                    this.y += this.speedY;
+                    if (this.y > canvas.height) this.reset();
+                }
+                draw() {
+                    ctx.fillStyle = `rgba(74, 92, 74, ${this.opacity})`;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            function initParticles() { for (let i = 0; i < 200; i++) particles.push(new Particle()); }
+            initParticles();
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => { p.update(); p.draw(); });
+                requestAnimationFrame(animateParticles);
+            }
+            animateParticles();
+        });
+    </script>
+</body>
+</html>
