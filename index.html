@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE SWAMP: An Interactive Autopsy</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto+Condensed:wght@300;400;700&display=swap');
+
+        :root {
+            --color-light: #f4f4f4;
+            --color-dark: #111111;
+            --color-accent-patriot: #B31942; /* Red */
+            --color-accent-swamp: #d4c965; /* Sickly Yellow */
+            --background-start: #ffffff;
+            --background-end: #0a0e0a;
+            --text-start: #2c3e50;
+            --text-end: #bdc3c7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Condensed', sans-serif;
+            background-color: var(--background-start);
+            color: var(--text-start);
+            transition: background-color 1s ease, color 1s ease;
+            overflow-x: hidden;
+        }
+        
+        #swamp-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        #page-pulse {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 15px;
+            height: 15px;
+            background-color: var(--color-accent-patriot);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--color-accent-patriot);
+            opacity: 0.7;
+            animation: pulse 2s infinite ease-in-out;
+            transition: background-color 1s ease, box-shadow 1s ease;
+            z-index: 1000;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.7; }
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 5rem 0;
+        }
+
+        h1, h2 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        h1 { font-size: 4rem; }
+        h2 { font-size: 2.5rem; }
+        p { font-size: 1.2rem; line-height: 1.8; font-weight: 300; margin-bottom: 1.5rem; }
+
+        .glitch-text {
+            animation: glitch 1.5s linear infinite;
+        }
+
+        @keyframes glitch {
+            2%,64%{ transform: translate(2px,0) skew(0deg); }
+            4%,60%{ transform: translate(-2px,0) skew(0deg); }
+            62%{ transform: translate(0,0) skew(5deg); }
+        }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--background-start);
+            overflow: hidden;
+            clip: rect(0, 900px, 0, 0);
+        }
+        .glitch-text::before { left: 2px; text-shadow: -1px 0 var(--color-accent-patriot); animation: glitch-anim-1 2s infinite linear alternate-reverse; }
+        .glitch-text::after { left: -2px; text-shadow: -1px 0 var(--color-accent-swamp); animation: glitch-anim-2 2s infinite linear alternate-reverse; }
+
+        @keyframes glitch-anim-1 { 0%{clip:rect(44px,9999px,42px,0)} 100%{clip:rect(2px,9999px,94px,0)} }
+        @keyframes glitch-anim-2 { 0%{clip:rect(12px,9999px,99px,0)} 100%{clip:rect(92px,9999px,3px,0)} }
+        
+        .interactive {
+            color: var(--color-accent-patriot);
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            transition: color 0.5s ease;
+        }
+
+        .interactive.swamped {
+            color: var(--color-accent-swamp);
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        .modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: #1a1a1a;
+            color: var(--color-light);
+            padding: 40px;
+            border: 1px solid var(--color-accent-swamp);
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 0 50px rgba(212, 201, 101, 0.2);
+            position: relative;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .modal-content::before {
+            content: 'EVIDENCE FILE // EYES ONLY';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: var(--color-accent-swamp);
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+        }
+        .modal-content h3 {
+            font-family: 'Playfair Display', serif;
+            color: var(--color-accent-swamp);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(212, 201, 101, 0.3);
+            padding-bottom: 0.5rem;
+        }
+        .modal-content p {
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+        .close-button {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2rem;
+            color: var(--color-light);
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .redacted {
+            background-color: var(--color-dark);
+            color: var(--color-dark);
+            user-select: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="page-pulse"></div>
+    <canvas id="swamp-canvas"></canvas>
+
+    <div class="container">
+        <!-- SCENE 1: THE PROMISE -->
+        <section id="scene1">
+            <h1 id="main-title">The Patriot & The Swamp</h1>
+            <p>It began with a promise. A vow to shatter the corrupt D.C. establishment. When Donald Trump called, Elon Musk answered. He wasn't a politician. He was a builder, an innovator, a man who got things done. To a nation chanting "Drain the Swamp," he seemed like the perfect weapon.</p>
+        </section>
+
+        <!-- SCENE 2: THE MANDATE -->
+        <section id="scene2">
+            <h2>The Mandate: DOGE</h2>
+            <p>Musk was handed the reins of a new, powerful weapon: the Department of Government Efficiency (DOGE). His mission was simple: cut the red tape, expose the grift, and bring private-sector accountability to a bloated government. It was a patriot's dream, a chance to fix a broken system from the inside.</p>
+        </section>
+
+        <!-- SCENE 3: THE PURGE -->
+        <section id="scene3">
+            <h2 id="purge-title">The Purge Begins</h2>
+            <p>But the swamp wasn't being drained. It was being re-engineered. While Musk was welcomed through the front door, the guard dogs were being quietly taken out the back. In the first days, the administration moved with brutal efficiency, not to eliminate waste, but to eliminate oversight.</p>
+            <p>The first to go were the watchdogs: <span class="interactive" data-victim="ig">18 Inspectors General</span>. Then, the <span class="interactive" data-victim="osc">Head of the Office of Special Counsel</span>, the man who protects whistleblowers. The <span class="interactive" data-victim="oge">Head of the Office of Government Ethics</span> followed. The message was clear: no one is watching.</p>
+        </section>
+
+        <!-- SCENE 4: THE FALLOUT -->
+        <section id="scene4">
+            <h2 id="fallout-title">Collateral Damage</h2>
+            <p>As DOGE began its work, a pattern emerged. The agencies being "reformed" were the ones investigating the administration's new friends. This wasn't about efficiency; it was about impunity.</p>
+            <p>The <span class="interactive" data-victim="eeoc">leaders of the EEOC</span>, who were suing Tesla, were fired. <span class="interactive" data-victim="wilcox">Gwen Wilcox</span>, the NLRB Chair who dared file a complaint against SpaceX, was illegally terminated. <span class="interactive" data-victim="fda">FDA staffers</span> reviewing Neuralink suddenly found themselves jobless. An entire office at the <span class="interactive" data-victim="dol">Department of Labor</span> investigating Musk's companies was gutted.</p>
+            <p>Each firing was a message. Each termination, a gift to a political ally.</p>
+        </section>
+        
+        <!-- SCENE 5: THE BETRAYAL -->
+        <section id="scene5">
+            <h2 id="betrayal-title">The Swamp Fights Back</h2>
+            <p>Musk, ever the engineer, saw the flaws in the machine. He began to speak out, offering criticism, believing he was a partner. He was wrong. In this Washington, there is no room for dissent, only fealty. The system he helped empower now turned on him.</p>
+            <p>Regulators at the <span class="interactive" data-victim="nhtsa">NHTSA</span>, a "thorn in Tesla's side," were targeted. The <span class="interactive" data-victim="faa">FAA administrator</span> who fined SpaceX was pressured to resign. The patriot had become a liability. On Day 100, he was persona non grata, cast out of the very swamp he was meant to drain.</p>
+        </section>
+        
+        <!-- SCENE 6: THE AUTOPSY -->
+        <section id="scene6">
+            <h2 id="autopsy-title">An Autopsy of Corruption</h2>
+            <p><strong>BETRAYAL:</strong> The promise to "Drain the Swamp" was betrayed, replaced by a system of monetizing public office for political allies and personal gain.</p>
+            <p><strong>POWER:</strong> The unchecked power of the executive branch was used to fire, intimidate, and reward, dismantling the government's own immune system.</p>
+            <p><strong>CONSEQUENCE:</strong> The price was paid not by the powerful, but by public servants who did their jobs and by the American people they served.</p>
+            <p class="final-thought">The patriot walked away. The swamp remains.</p>
+        </section>
+
+    </div>
+
+    <!-- Modals -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <button class="close-button">×</button>
+            <h3 id="modal-title"></h3>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+    
+    <!-- JS Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/ScrollTrigger.min.js"></script>
+    <script>
+        const victimData = {
+            ig: {
+                title: 'The 18 Inspectors General',
+                body: `<p>They were the independent watchdogs inside every federal agency, the first line of defense against waste, fraud, and abuse. Their job was to be loyal to the law, not to a political party.</p><p>Firing them en masse was the foundational act of impunity. It sent a bone-chilling message across the entire government: no one is looking over your shoulder. The guard dogs were gone, leaving the hen house open for business. <span class="redacted">This action cleared the way for all subsequent acts of corruption.</span></p>`
+            },
+            osc: {
+                title: 'The Office of Special Counsel',
+                body: `<p>This office is the shield for federal whistleblowers—the brave employees who risk their careers to expose wrongdoing. It also prosecutes political corruption within the civil service.</p><p>By firing its head, the administration declared open war on whistleblowers. It created a culture of fear, ensuring that anyone who saw something would say nothing. The message: <span class="redacted">loyalty is more valuable than integrity.</span></p>`
+            },
+            oge: {
+                title: 'The Office of Government Ethics',
+                body: `<p>The OGE is the conscience of the executive branch. It ensures that officials, from the President down, follow conflict-of-interest laws and avoid bribery. Its mission is to prevent the very monetization of power that defined the administration.</p><p>Removing its leadership was like removing the brakes from a car pointing downhill. It was a signal that ethics were now optional, and that self-enrichment was not a bug, but a feature.</p>`
+            },
+            eeoc: {
+                title: 'EEOC Leadership',
+                body: `<p>The Equal Employment Opportunity Commission was actively pursuing discrimination lawsuits against Tesla. Its leaders were career officials dedicated to upholding civil rights in the workplace.</p><p>Their removal was a direct quid pro quo. It was a gift to a corporate ally, paid for by sacrificing justice for workers. The federal government effectively abandoned its own lawsuit to appease a powerful friend.</p>`
+            },
+            wilcox: {
+                title: 'Gwen Wilcox, NLRB Chair',
+                body: `<p>Gwen Wilcox wasn't just a name on an org chart. She was the head of the National Labor Relations Board, the last line of defense for workers organizing against corporate giants. Her crime? Daring to file a complaint against SpaceX for violating labor laws.</p><p>The reward for her integrity was an illegal termination. Her firing didn't just silence a watchdog; it sent a clear message to every other regulator: <span class="redacted">stay in line, or you're next.</span></p>`
+            },
+            fda: {
+                title: 'FDA Staffers (Neurolink Review)',
+                body: `<p>These were scientists and medical experts, tasked with ensuring new medical devices like Elon Musk's Neuralink were safe for human trials. They were following rigorous scientific protocols.</p><p>Their abrupt termination sent a shockwave through the agency. The message was not subtle: expedite approvals for friends of the administration, or risk your career. Scientific integrity was sacrificed at the altar of political expediency.</p>`
+            },
+            dol: {
+                title: 'Department of Labor Investigators',
+                body: `<p>An entire office at the Department of Labor was dedicated to investigating workplace safety and labor violations at companies like Tesla and SpaceX. They were the cops on the beat for American workers.</p><p>The office was gutted. Investigations were halted. It was another direct favor to a corporate ally, effectively giving Musk's companies a free pass on violations that other businesses would be fined for.</p>`
+            },
+            nhtsa: {
+                title: 'NHTSA Staff',
+                body: `<p>The National Highway Traffic Safety Administration had a reputation for being a "thorn in Tesla's side" due to its rigorous safety investigations into Autopilot crashes. They were doing their job: keeping American roads safe.</p><p>When Musk fell from favor, these officials were publicly targeted and harassed by the administration. It was a demonstration of power—proof that the government could be weaponized not just to help friends, but to punish perceived enemies.</p>`
+            },
+            faa: {
+                title: 'FAA Administrator',
+                body: `<p>The Federal Aviation Administration fined SpaceX for violating launch protocols. The administrator was enforcing safety rules designed to prevent disasters.</p><p>Following the fine, the administrator was subjected to immense political pressure to resign. The goal was to replace an independent regulator with someone more compliant, ensuring that powerful corporations could operate above the law.</p>`
+            }
+        };
+
+        // GSAP & Interactive Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            gsap.registerPlugin(ScrollTrigger);
+
+            const body = document.body;
+            const interactiveElements = document.querySelectorAll('.interactive');
+            const pagePulse = document.getElementById('page-pulse');
+
+            // --- Scene transitions ---
+            ScrollTrigger.create({
+                trigger: "#scene2",
+                start: "top center",
+                onEnter: () => {
+                    document.getElementById('swamp-canvas').style.opacity = '0.2';
+                },
+                onLeaveBack: () => {
+                    document.getElementById('swamp-canvas').style.opacity = '0';
+                }
+            });
+
+            gsap.to(body, {
+                backgroundColor: var(--background-end),
+                color: var(--text-end),
+                scrollTrigger: {
+                    trigger: "#scene3",
+                    start: "top top",
+                    end: "bottom bottom",
+                    scrub: 1.5
+                }
+            });
+            
+            gsap.to('#swamp-canvas', {
+                opacity: 1,
+                scrollTrigger: {
+                    trigger: "#scene3",
+                    start: "top top",
+                    end: "bottom center",
+                    scrub: 1
+                }
+            });
+
+            // --- Title Glitch ---
+            ScrollTrigger.create({
+                trigger: "#fallout-title",
+                start: "top center",
+                onEnter: () => document.getElementById('fallout-title').classList.add('glitch-text'),
+                onLeaveBack: () => document.getElementById('fallout-title').classList.remove('glitch-text')
+            });
+            gsap.from("#betrayal-title", {
+                opacity: 0,
+                x: -50,
+                scrollTrigger: {
+                    trigger: "#scene5",
+                    start: "top center",
+                    toggleActions: "play none none reverse"
+                }
+            });
+
+            // --- Interactive Elements Color Change ---
+            ScrollTrigger.create({
+                trigger: "#scene4",
+                start: "top center",
+                onToggle: (self) => {
+                    interactiveElements.forEach(el => el.classList.toggle('swamped', self.isActive));
+                    pagePulse.style.backgroundColor = self.isActive ? 'var(--color-accent-swamp)' : 'var(--color-accent-patriot)';
+                    pagePulse.style.boxShadow = self.isActive ? '0 0 15px var(--color-accent-swamp)' : '0 0 15px var(--color-accent-patriot)';
+                }
+            });
+            
+            // --- Pulse Animation Speed ---
+            gsap.to(pagePulse, {
+                animationDuration: '0.8s',
+                scrollTrigger: {
+                    trigger: "#scene5",
+                    start: "top center",
+                    scrub: true
+                }
+            });
+
+
+            // --- Modal Logic ---
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const closeModal = document.querySelector('.close-button');
+
+            interactiveElements.forEach(el => {
+                el.addEventListener('click', () => {
+                    const victimId = el.dataset.victim;
+                    const data = victimData[victimId];
+                    if (data) {
+                        modalTitle.textContent = data.title;
+                        modalBody.innerHTML = data.body;
+                        modal.classList.add('visible');
+                    }
+                });
+            });
+
+            closeModal.addEventListener('click', () => modal.classList.remove('visible'));
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('visible');
+                }
+            });
+
+            // --- Canvas Swamp Effect ---
+            const canvas = document.getElementById('swamp-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 1.5 + 0.5;
+                    this.speedX = Math.random() * 0.4 - 0.2;
+                    this.speedY = Math.random() * 0.4 - 0.2;
+                    this.color = 'rgba(74, 92, 74, 0.6)';
+                }
+                update() {
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                    if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+                }
+                draw() {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            function initParticles() {
+                for (let i = 0; i < 150; i++) {
+                    particles.push(new Particle());
+                }
+            }
+            initParticles();
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                requestAnimationFrame(animateParticles);
+            }
+            animateParticles();
+        });
+
+    </script>
+</body>
+</html>
