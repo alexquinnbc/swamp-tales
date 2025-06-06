@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE SWAMP: A 100-Day Autopsy</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&family=Roboto+Condensed:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap');
+
+        :root {
+            --color-light: #f4f4f4;
+            --color-dark: #111111;
+            --color-patriot-red: #B31942;
+            --color-patriot-blue: #0A3161;
+            --color-swamp-green: #4A5C4A;
+            --color-swamp-accent: #d4c965;
+            --background-start: #fdfdfd;
+            --background-end: #0a0e0a;
+            --text-start: #2c3e50;
+            --text-end: #bdc3c7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Roboto Condensed', sans-serif;
+            background-color: var(--background-start);
+            color: var(--text-start);
+            transition: background-color 1s ease, color 1s ease;
+            overflow-x: hidden;
+        }
+        
+        #swamp-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0; transition: opacity 1s ease-in-out; }
+        .container { width: 90%; max-width: 1100px; margin: 0 auto; z-index: 2; position: relative; }
+        section { min-height: 100vh; padding: 8rem 0; display: flex; flex-direction: column; justify-content: center; }
+        h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 900; line-height: 1.1; margin-bottom: 1.5rem; text-transform: uppercase; }
+        h1 { font-size: clamp(3rem, 10vw, 6rem); }
+        h2 { font-size: clamp(2.5rem, 8vw, 4.5rem); border-left: 5px solid var(--color-patriot-red); padding-left: 20px; transition: border-color 0.5s ease; }
+        h2.swamped { border-color: var(--color-swamp-accent); }
+        p { font-size: 1.2rem; line-height: 1.8; font-weight: 300; max-width: 800px; margin-bottom: 1.5rem; }
+
+        #hero { text-align: center; justify-content: center; }
+        #hero-image { width: 100%; max-width: 600px; margin: 2rem auto; filter: drop-shadow(0px 10px 20px rgba(0,0,0,0.1)); transition: filter 1s ease; }
+        #hero-image.cracked { filter: saturate(0) brightness(0.8) contrast(1.2) drop-shadow(0px 10px 20px rgba(0,0,0,0.3)); }
+
+        #corruption-cascade-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 3rem; }
+        .cascade-item {
+            aspect-ratio: 1; border: 1px solid #ccc; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; cursor: pointer; transition: all 0.3s ease; opacity: 0; transform: scale(0.5); background-color: rgba(255, 255, 255, 0.1);
+        }
+        .cascade-item:hover { transform: scale(1.1) !important; border-color: var(--color-swamp-accent); background-color: rgba(212, 201, 101, 0.1); z-index: 10; }
+        .cascade-item .number { font-size: 2.5rem; font-family: 'Playfair Display', serif; font-weight: 900; }
+        .cascade-item .summary { font-size: 0.6rem; padding: 0 5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        .infographic { background: rgba(0,0,0,0.3); border: 1px solid var(--color-swamp-green); padding: 2rem; margin-top: 3rem; color: var(--text-end); }
+        .infographic h3 { color: var(--color-swamp-accent); font-size: 1.8rem; }
+        
+        .infographic-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-family: 'Source Code Pro', monospace; }
+        .infographic-table th, .infographic-table td { padding: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.2); text-align: left; }
+        .infographic-table th { color: var(--color-swamp-accent); text-transform: uppercase; }
+        .infographic-table tr:nth-child(even) { background-color: rgba(0,0,0,0.2); }
+        .amount { color: #f39c12; font-weight: 700; }
+
+        .friends-list { list-style: none; padding-left: 0; }
+        .friends-list li { padding: 0.5rem; border-bottom: 1px solid #444; font-size: 1.1rem; }
+        .friends-list .role { color: #95a5a6; }
+
+        .decay-chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; text-align: center; margin-top: 2rem; }
+        .decay-pillar { opacity: 0; transform: translateY(50px); }
+        .decay-pillar img { width: 80px; filter: invert(89%) sepia(21%) saturate(542%) hue-rotate(359deg) brightness(91%) contrast(86%); }
+        .decay-pillar.fallen img { filter: invert(19%) sepia(21%) saturate(1512%) hue-rotate(352deg) brightness(91%) contrast(80%); }
+        .decay-pillar h4 { margin-top: 1rem; color: var(--color-swamp-accent); }
+        
+        #musk-network { text-align: center; position: relative; padding: 2rem; min-height: 450px; }
+        #musk-center { width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--color-patriot-red); margin: auto; object-fit: cover; }
+        .musk-node { position: absolute; width: 100px; text-align: center; font-size: 0.8rem; }
+        
+        #victim-files { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .victim-card { background: #1a1a1a; border: 1px solid #444; padding: 1.5rem; cursor: pointer; transition: transform 0.3s ease; position: relative; }
+        .victim-card:hover { transform: translateY(-10px); }
+        .victim-card h3 { font-size: 1.5rem; color: var(--color-swamp-accent); }
+        .victim-card .stamp { position: absolute; top: 10px; right: 10px; width: 80px; opacity: 0.5; }
+
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 14, 10, 0.85);
+            backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 2000;
+            opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        .modal.visible { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: var(--color-dark); color: var(--color-light); padding: 40px; border: 1px solid var(--color-swamp-accent);
+            width: 90%; max-width: 700px; box-shadow: 0 0 50px rgba(212, 201, 101, 0.2); position: relative;
+            font-family: 'Courier New', Courier, monospace; overflow-y: auto; max-height: 90vh;
+        }
+        .modal-content::before {
+            content: '//CLASSIFIED: SWAMP_INTEL//'; position: absolute; top: 10px; left: 10px;
+            color: var(--color-swamp-accent); font-size: 0.8rem; letter-spacing: 2px;
+        }
+        .modal-content h3 { font-family: 'Playfair Display', serif; color: var(--color-swamp-accent); font-size: 2rem; margin-bottom: 1rem; border-bottom: 1px solid rgba(212, 201, 101, 0.3); padding-bottom: 0.5rem; }
+        .modal-content p { font-size: 1rem; line-height: 1.7; margin-bottom: 1rem; }
+        .close-button { position: absolute; top: 15px; right: 20px; font-size: 2rem; color: var(--color-light); background: none; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <canvas id="swamp-canvas"></canvas>
+
+    <div class="container">
+        <section id="hero">
+            <img id="hero-image" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAoHCBYWFRgWFhYZGRgaGhocGhwaHBwcHBohIRwaHBwaHB4cIS4lHB4rIRwaJjgmKy8xNTU1GiQ7QDs0Py40NTEBDAwMEA8QHxISHzQrJCs0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NP/AABEIALcBEwMBIgACEQEDEQH/xAAbAAACAwEBAQAAAAAAAAAAAAADBAECBQYAB//EAD0QAAIBAgQDBgQEBgICAgMAAAECEQADBBIhMQVBUWEGEyJxgZGhMrHB0fAUQuHxI1JicoKSFhcjM0NTstL/xAAZAQADAQEBAAAAAAAAAAAAAAAAAQIDBAX/xAAlEQACAgICAgICAgMAAAAAAAAAAQIRAzEhEjJBURMicQQzQmH/2gAMAwEAAhEDEQA/APuFJSgUqigJKUUqigJKUUqigJKUClRQElKBSxQElKBSxQElKBQCgJKUCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoCSlApUUBJSgUqKAkpQKVFAKUUqKAUopQKAUopQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUAp- //W3C" alt="The White House" >
+            <h1>The Swamp</h1>
+            <p>An interactive autopsy of 100 days of corruption.</p>
+        </section>
+
+        <section id="the-deluge">
+            <h2 id="deluge-title">The Deluge</h2>
+            <p>It didn't start as a trickle. It was a flood. A daily, unrelenting cascade of actions that warped the very fabric of American government. Below are 100 reported acts of corruption from the first 100 days. Click any number to see the details.</p>
+            <div id="corruption-cascade-container">
+                <!-- 100 items will be generated here by JavaScript -->
+            </div>
+        </section>
+        
+        <section id="the-anatomy">
+            <h2 id="anatomy-title" class="swamped">Anatomy of the Swamp</h2>
+            <p>The corruption wasn't random; it followed a playbook. These are the systems that were exploited, weaponized, and perfected to turn public service into private profit.</p>
+            
+            <div class="infographic" id="qpa-infographic">
+                <h3>Artifact 1: The Pay-to-Play Ledger</h3>
+                <p>A simple, transactional loop: large donations flowed in, and valuable government favors flowed out. A pattern of quid pro quo that treated public policy as a commodity for sale.</p>
+                <table class="infographic-table">
+                    <thead><tr><th>Donor</th><th>Donation</th><th>Alleged Government Favor</th></tr></thead>
+                    <tbody>
+                        <tr><td>GOP Megadonor</td><td class="amount">$4,000,000</td><td>Nominated as UK Ambassador (same day)</td></tr>
+                        <tr><td>Intuit</td><td class="amount">$1,000,000</td><td>Canceled free online tax filing program (Direct File)</td></tr>
+                        <tr><td>Ripple (Crypto)</td><td class="amount">$5,000,000</td><td>SEC fine reduced by $75,000,000</td></tr>
+                        <tr><td>Big Pharma</td><td class="amount">Millions</td><td>Began undermining Medicare's drug price negotiation</td></tr>
+                        <tr><td>Poultry Co.</td><td class="amount">Largest</td><td>Parent co. approved for NYSE after DOJ scrutiny</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="infographic">
+                <h3>Artifact 2: The Friends & Family Plan</h3>
+                <p>Key positions were filled not based on expertise, but on loyalty and personal connection, blurring the lines between government service and family enterprise.</p>
+                <ul class="friends-list">
+                    <li>Don Jr.'s longtime partner <span class="role">➜ Ambassador to Greece</span></li>
+                    <li>Jared Kushner's father <span class="role">➜ Ambassador to France</span></li>
+                    <li>Tiffany Trump's father-in-law <span class="role">➜ Presidential Adviser</span></li>
+                    <li>Defense Sec. Hegseth's younger brother <span class="role">➜ Key Admin Role</span></li>
+                </ul>
+            </div>
+            
+            <div class="infographic" id="musk-infographic">
+                <h3>Artifact 3: The Musk Connection</h3>
+                <p>An unprecedented series of executive actions appeared to directly benefit the personal and financial interests of a single, powerful ally: Elon Musk.</p>
+                <div id="musk-network">
+                    <img id="musk-center" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAoHCBYWFRgWFhYZGRgaGhocGhwaHBwcHBohIRwaHBwaHB4cIS4lHB4rIRwaJjgmKy8xNTU1GiQ7QDs0Py40NTEBDAwMEA8QHxISHzQrJCs0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NP/AABEIALcBEwMBIgACEQEDEQH/xAAbAAACAwEBAQAAAAAAAAAAAAADBAECBQYAB//EAD0QAAIBAgQDBgQEBgICAgMAAAECEQADBBIhMQVBUWEGEyJxgZGhMrHB0fAUQuHxI1JicoKSFhcjM0NTstL/xAAZAQADAQEBAAAAAAAAAAAAAAAAAQIDBAX/xAAlEQACAgICAgICAgMAAAAAAAAAAQIRAzEhEjJBURMicQQzQmH/2gAMAwEAAhEDEQA/APuFJSgUqigJKUUqigJKUUqigJKUClRQElKBSxQElKBSxQElKBQCgJKUCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoBQCgUAoCSlApUUBJSgUqKAkpQKVFAKUUqKAUopQKAUopQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUApQKAUAp- //W3C" alt="Elon Musk">
+                    <div id="musk-nodes-container">
+                        <!-- Nodes will be added by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="infographic">
+                <h3>Artifact 4: Systemic Decay</h3>
+                <p>To ensure the corruption could continue unchecked, the administration systematically removed the "cops on the beat"—the independent watchdogs tasked with upholding the law and ethics.</p>
+                <div class="decay-chart">
+                    <div class="decay-pillar" id="pillar-ig">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZmZmZiI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgMThjLTQuNDEgMC04LTMuNTktOC04czMuNTktOCA4LTggOCAzLjU5IDggOC0zLjU5IDgtOCA4eiIvPjxwYXRoIGQ9Ik0xMi41IDdoLTFWN2gtMXY1aDF2M2gxdjNoMXYtNmgtMXoiLz48L3N2Zz4=" alt="Pillar Icon">
+                        <h4>18 Inspectors General</h4>
+                        <p>Fired</p>
+                    </div>
+                    <div class="decay-pillar" id="pillar-osc">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZmZmZiI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgMThjLTQuNDEgMC04LTMuNTktOC04czMuNTktOCA4LTggOCAzLjU5IDggOC0zLjU5IDgtOCA4eiIvPjxwYXRoIGQ9Ik0xMi41IDdoLTFWN2gtMXY1aDF2M2gxdjNoMXYtNmgtMXoiLz48L3N2Zz4=" alt="Pillar Icon">
+                        <h4>Head of Special Counsel</h4>
+                        <p>Fired</p>
+                    </div>
+                    <div class="decay-pillar" id="pillar-oge">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZmZmZiI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgMThjLTQuNDEgMC04LTMuNTktOC04czMuNTktOCA4LTggOCAzLjU5IDggOC0zLjU5IDgtOCA4eiIvPjxwYXRoIGQ0Ik0xMi41IDdoLTFWN2gtMXY1aDF2M2gxdjNoMXYtNmgtMXoiLz48L3N2Zz4=" alt="Pillar Icon">
+                        <h4>Head of Govt. Ethics</h4>
+                        <p>Fired</p>
+                    </div>
+                    <div class="decay-pillar" id="pillar-doj">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZmZmZiI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgMThjLTQuNDEgMC04LTMuNTktOC04czMuNTktOCA4LTggOCAzLjU5IDggOC0zLjU5IDgtOCA4eiIvPjxwYXRoIGQ0Ik0xMi41IDdoLTFWN2gtMXY1aDF2M2gxdjNoMXYtNmgtMXoiLz48L3N2Zz4=" alt="Pillar Icon">
+                        <h4>DOJ Prosecutors</h4>
+                        <p>Fired/Gutted</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="the-victims">
+            <h2 id="victims-title" class="swamped">The Victim Files</h2>
+            <p>Behind every corrupt act is a human cost. These are the watchdogs, regulators, and public servants who were fired, silenced, or sidelined for doing their jobs. Click a file to read their story.</p>
+            <div id="victim-files">
+                <!-- Victim cards generated by JS -->
+            </div>
+        </section>
+
+        <section id="the-autopsy">
+            <h2 id="autopsy-title" class="swamped">The Autopsy</h2>
+            <p><strong>BETRAYAL:</strong> The promise to "Drain the Swamp" was betrayed, replaced by a system of monetizing public office for political allies and personal gain.</p>
+            <p><strong>POWER:</strong> The unchecked power of the executive branch was used to fire, intimidate, and reward, dismantling the government's own immune system.</p>
+            <p><strong>CONSEQUENCE:</strong> "This is outlandish, this is illegal, this is unconstitutional, brazen corruption... If this becomes normalized, our democracy will not survive." - Sen. Chris Murphy</p>
+        </section>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <button class="close-button">×</button>
+            <h3 id="modal-title"></h3>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/ScrollTrigger.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const corruptionData = {
+                1: { summary: "Tesla Dealership WH", details: "Turned the White House into a Tesla dealership." },
+                2: { summary: "Fired FTC Commissioners", details: "Fired independent commissioners at the FTC." },
+                3: { summary: "Punished Election Opponents", details: "Punished former officials who opposed his 2020 election lies." },
+                4: { summary: "Solicited Easter Egg Roll Sponsors", details: "Paid for the White House Easter Egg roll by soliciting corporate sponsors with business pending before the government." },
+                5: { summary: "$500k for Cabinet Access", details: "Helped Trump’s son set up a club — pay $500,000 for access to Trump’s cabinet." },
+                6: { summary: "Apple Tariff Exception", details: "Declared NO tariff exceptions, then secretly permitted Apple's CEO access and cut iPhone tariffs." },
+                7: { summary: "Insider Trading Opportunity", details: "Created an opening for insider trading by reportedly giving Wall Street exclusive information about trade talks." },
+                8: { summary: "Big Pharma Dinners", details: "Hosted million-dollar dinners between Big Pharma CEOs and their regulator RFK Jr." },
+                9: { summary: "Launched & Pumped Memecoin", details: "Launched crypto memecoin right before inauguration to make millions, then increased its value by signing executive orders making crypto a priority." },
+                10: { summary: "Melania's Memecoin", details: "Launched a meme coin for Melania, too." },
+                11: { summary: "Tax Handout for Donors", details: "Promised his 'rich-as-hell' donors a giant tax handout, and is working to deliver." },
+                12: { summary: "Weakened Civil Service Rules", details: "Weakened rules insulating government workers from politics." },
+                13: { summary: "Limited Bribery Investigations", details: "Limited corporate foreign bribery investigations." },
+                14: { summary: "Halted Transparency Act", details: "Halted enforcement of the Corporate Transparency Act." },
+                15: { summary: "Sold WH Tours for Memecoin Holders", details: "Offered a private dinner with Trump and a special tour of the White House for the top 220 holders of his memecoin, profiting from the coin's value and trading fees." },
+                16: { summary: "$40M from Bezos for Documentary", details: "Accepted $40 million for First Lady Melania's documentary from Jeff Bezos – way above the market rate." },
+                17: { summary: "Used Bezos Deal as Model", details: "Pointed to Bezos’s multi-million-dollar documentary payment as a model for other corporations seeking favor." },
+                18: { summary: "Deal with Amazon for 'Apprentice'", details: "Struck a deal with Amazon to stream Trump’s old show The Apprentice, enriching him while Amazon sought federal benefits." },
+                19: { summary: "Coerced Law Firms", details: "Coerced law firms to offer almost $1 billion in free legal work in an arrangement that could violate anti-bribery laws." },
+                20: { summary: "Undermined Medicare Drug Prices", details: "Started undermining Medicare’s ability to negotiate drug prices after Big Pharma gave millions to his inauguration." },
+                21: { summary: "Sued 60 Minutes", details: "Filed a meritless lawsuit against 60 Minutes and launched a baseless FCC investigation." },
+                22: { summary: "Kicked AP out of Briefings", details: "Tried to get the AP to bend the knee and kicked them out of the White House briefing room when they refused." },
+                23: { summary: "Hired DefSec's Brother", details: "Hired Defense Secretary Hegseth’s younger brother to serve in a key role." },
+                24: { summary: "Hired Don Jr.'s Partner", details: "Hired a longtime former partner of Don Jr. to serve as Ambassador to Greece." },
+                25: { summary: "Nominated Kushner's Father", details: "Nominated Jared Kushner’s father to serve as Ambassador to France." },
+                26: { summary: "Selected Tiffany's Father-in-Law", details: "Selected Tiffany Trump’s father-in-law to serve as an adviser." },
+                27: { summary: "Oil Exec to lead Energy Dept.", details: "Appointed an oil and gas executive to lead the Department of Energy." },
+                28: { summary: "Lobbyist as Chief of Staff", details: "Selected a Chief of Staff who was a big-time lobbyist for clients like tobacco and mining companies." },
+                29: { summary: "Lobbyists to write EPA rules", details: "Named officials who had recently lobbied for oil and chemical giants to help write E-P-A rules." },
+                30: { summary: "Appointed Mehmet Oz to CMS", details: "Appointed Mehmet Oz, with close ties to Medicare Advantage insurers, to lead CMS." },
+                31: { summary: "Major Donor to lead Navy", details: "Appointed John Phelan, a major donor with no military or government experience, to lead the Navy." },
+                32: { summary: "Lobbyist to lead DOJ", details: "Appointed Pam Bondi, a former lobbyist for a federal detention contractor, to lead the DOJ." },
+                33: { summary: "Stopped Enforcing Foreign Lobbyist Rules", details: "Announced the DOJ would stop prioritizing enforcement of restrictions on foreign lobbyists." },
+                34: { summary: "Crypto Money Launderer to Commerce", details: "Appointed Howard Lutnick, with billions invested in companies accused of crypto money laundering, to lead the Commerce Department." },
+                35: { summary: "Weight-Loss Exec to lead FDA", details: "Appointed Marty Makary, the former executive of a company selling weight-loss drugs, to lead the FDA." },
+                36: { summary: "Airline Lobbyist to Transportation", details: "Appointed Sean Duffy, who lobbied for the airline industry, to Transportation Secretary." },
+                37: { summary: "Defense Contractor Ties to lead DoD", details: "Tapped Pete Hegseth, whose wife owns stock in large defense contractors, to lead the Defense Department." },
+                38: { summary: "Big Oil Land-Leaser to Interior", details: "Tapped Doug Burgum — who made money from leasing land to Big Oil — to lead the Interior Department." },
+                39: { summary: "Big Oil Lobbyist to run BOEM", details: "Nominated a Big Oil lobbyist to run the Bureau of Ocean Energy Management." },
+                40: { summary: "IRS Head with Campaign Debt", details: "Nominated as IRS head Billy Long, who received donations after being nominated to clear old campaign debts." },
+                41: { summary: "Crypto Lobbyist to lead SEC", details: "Tapped Paul Atkins, a former crypto lobbyist, to lead the SEC." },
+                42: { summary: "Tax Lobbyist for Tax Policy", details: "Appointed a former tax lobbyist, to lead tax policy." },
+                43: { summary: "RFK Jr. to head HHS", details: "Appointed RFK Jr., who planned to get paid for anti-vax lawsuits while heading up HHS." },
+                44: { summary: "Defense Investor for Pentagon", details: "Appointed a top Pentagon official who led a firm investing in defense contractors." },
+                45: { summary: "Medicare Privatizer for OMB", details: "Appointed someone who lobbied to privatize Medicare to lead OMB’s healthcare budget." },
+                46: { summary: "Musk Exec for DOGE", details: "Installed Steve Davis to effectively lead DOGE while also leading a Musk company." },
+                47: { summary: "DOGE Leader for Treasury", details: "Installed another DOGE leader to control Treasury’s payment system while also a software CEO." },
+                48: { summary: "Crypto VC for Crypto Czar", details: "Handed power over crypto policy to a White House crypto czar who leads a venture capital firm that heavily invests in crypto." },
+                49: { summary: "Border Contractor for Border Czar", details: "Selected a border czar who led a firm that got tens of millions in federal contracts." },
+                50: { summary: "Tax-Dodger to gut IRS", details: "Appointed Treasury Secretary Bessent who is gutting the IRS so that it can’t audit rich tax cheats." },
+                51: { summary: "Pardoned Rod Blagojevich", details: "Pardoned Rod Blagojevich, former Illinois governor convicted for corruption, after his vocal support for Trump." },
+                52: { summary: "Pardoned Jan 6 Insurrectionists", details: "Pardoned January 6 insurrectionists who tried to overturn an election he lost." },
+                53: { summary: "Pardoned Loyalist (Wire Fraud)", details: "Pardoned a Trump loyalist found guilty of wire fraud." },
+                54: { summary: "Pardoned Donor's Son", details: "Pardoned the son of a longtime Republican donor." },
+                55: { summary: "Pardoned Corporation ($100M Fine)", details: "Pardoned a corporation that had been fined $100 million for money laundering." },
+                56: { summary: "Launched own Stablecoin", details: "Launched his own stablecoin while preparing to sign legislation that will help it." },
+                57: { summary: "Sold Presidential Merch", details: "Sold merch with presidential branding." },
+                58: { summary: "Disbanded DOJ Crypto Unit", details: "Disbanded DOJ’s crypto unit after talks between Binance and a Trump-backed crypto company." },
+                59: { summary: "Halted SEC Actions on Crypto", details: "Halted SEC enforcement actions against crypto companies that enriched Trump." },
+                60: { summary: "Met Crypto Execs Seeking Favors", details: "Met with crypto executives asking Treasury to back off of oversight." },
+                61: { summary: "Financial Ties to Trump Media", details: "Maintained financial ties between Trump officials and Trump’s media company, including FBI Director Kash Patel." },
+                62: { summary: "AG Nominee Owned DJT Shares", details: "Nominated Attorney General Bondi who owned $2 million in DJT shares." },
+                63: { summary: "Paid Ed Sec in DJT Shares", details: "Paid the Education Secretary almost $1 million in Trump Media company shares." },
+                64: { summary: "Intel Nominees Owned DJT Shares", details: "Intelligence Board nominees who have millions in Trump Media company shares." },
+                65: { summary: "Envoy to Develop Gaza Real Estate", details: "Selected a Special Envoy to the Middle East who wants to develop real estate in Gaza." },
+                66: { summary: "FBI Dir Consulted for Qatar", details: "Appointed an FBI Director who consulted for the Qatari government." },
+                67: { summary: "FBI Dir's Cayman/China Ties", details: "Picked an FBI Director who received millions from a Cayman Island holding company with ties to China." },
+                68: { summary: "Canceled Free Tax Filing (Helped Intuit)", details: "Decided to cancel the Direct File program, helping Intuit, which gave $1 million to his inauguration." },
+                69: { summary: "Took Donation, Approved NYSE Listing", details: "Took largest inauguration donation from a poultry company under DOJ scrutiny, then its parent company was approved for the NYSE." },
+                70: { summary: "Dropped Probe on Ed Sec's Husband", details: "Dropped a probe into sexual misconduct allegations against Trump’s Education Secretary’s husband." },
+                71: { summary: "Hosted Officials at Mar-a-Lago", details: "Hosted dozens of foreign, federal, and state officials at Mar-a-Lago, helping enrich Trump." },
+                72: { summary: "Hosted GOP Retreat at Resort", details: "Hosted a GOP retreat at another one of Trump’s resorts." },
+                73: { summary: "Circumvented Contracting Process", details: "Circumvented the normal contracting process to pick a company with close ties to his former campaign manager." },
+                74: { summary: "$30M ICE Contract to Peter Thiel", details: "Awarded a $30 million ICE contract to Trump insider Peter Thiel." },
+                75: { summary: "Developed Properties Overseas", details: "Continued developing new Trump properties overseas, including in Saudi Arabia and the UAE." },
+                76: { summary: "$400M Plan for Tesla", details: "Hatched a plan for the State Department to pay Tesla $400 million." },
+                77: { summary: "$4M Donation for Ambassadorship", details: "Accepted a $4 million inauguration donation and nominated the donor as UK ambassador the same day." },
+                78: { summary: "Fired EEOC (Probed Tesla)", details: "Fired EEOC leaders that were investigating and suing Tesla." },
+                79: { summary: "Fired NLRB Chair (Probed SpaceX)", details: "Illegally fired the NLRB Chair, which had filed a complaint against SpaceX." },
+                80: { summary: "Gutted CFPB (Probed Musk Co's)", details: "Gutted the CFPB staff and fired the director after they investigated complaints against Musk's companies." },
+                81: { summary: "Gutted Labor Dept. (Probed Musk)", details: "Gutted the Department of Labor office investigating Tesla and Space X." },
+                82: { summary: "Fired USAID IG (Probed Starlink)", details: "Fired the USAID inspector general who launched a probe into satellite terminals made by Musk's Starlink." },
+                83: { summary: "Targeted NHTSA Staff", details: "Targeted the National Highway Traffic Safety Administration staff who were reportedly a “thorn in Tesla's side.”" },
+                84: { summary: "Musk to 'Self-Police'", details: "Said Musk would self-police his conflicts of interest." },
+                85: { summary: "Pressured FAA Admin to Resign", details: "Pressured the administrator of the FAA, which fined Musk's SpaceX, to resign." },
+                86: { summary: "Hid Musk's Financials", details: "Permitted Musk to keep his financial disclosure hidden." },
+                87: { summary: "Starlink FAA Deal", details: "Allowed Musk's Starlink to start working with the FAA after Musk criticized the FAA's air traffic telecom system." },
+                88: { summary: "SpaceX Golden Dome Contract", details: "Made Musk’s SpaceX the frontrunner for a new lucrative Golden Dome contract." },
+                89: { summary: "Stood by Musk's Threats", details: "Stood by Musk when his executives told an advertising firm to increase ad revenue by threatening a pending merger." },
+                90: { summary: "Musk Joined USAF Nominee Interview", details: "Permitted Musk to join his interview with the Air Force Secretary nominee while SpaceX held billions in Air Force contracts." },
+                91: { summary: "NTSB News Only on X", details: "Permitted the National Transportation Safety Board to share news related to airplane crashes only on Musk-owned X." },
+                92: { summary: "SSA Comms Only on X", details: "Permitted the Social Security Administration to only share important public communication on X." },
+                93: { summary: "Dropped SpaceX Discrimination Complaint", details: "Dropped the Department of Justice's anti-discrimination complaint against Musk's SpaceX." },
+                94: { summary: "Fired FDA Staff (Probed Neuralink)", details: "Fired FDA staffers reviewing Elon Musk’s Neuralink clinical trial applications." },
+                95: { summary: "Fired 18 Inspectors General", details: "Fired 18 Inspectors General who make sure federal agencies follow the law." },
+                96: { summary: "Fired Head of Special Counsel", details: "Fired the head of the Office of Special Counsel who protects whistleblowers." },
+                97: { summary: "Fired Head of Govt. Ethics", details: "Fired the head of the Office of Government Ethics." },
+                98: { summary: "Fired Jan 6 Prosecutors", details: "Fired DOJ prosecutors who worked on the January 6th investigations." },
+                99: { summary: "Sidelined DOJ Legal Review", details: "Sidelined DOJ's office that reviews the legality of executive orders." },
+                100: { summary: "Gutted DOJ Public Misconduct Office", details: "Gutted DOJ's office that prosecutes misconduct by public officials." }
+            };
+            const victimData = {
+                ig: { title: 'The 18 Inspectors General', body: `<p>They were the independent watchdogs inside every federal agency, the first line of defense against waste, fraud, and abuse. Their job was to be loyal to the law, not to a political party.</p><p>Firing them en masse was the foundational act of impunity. It sent a bone-chilling message across the entire government: no one is looking over your shoulder. The guard dogs were gone, leaving the hen house open for business.</p>` },
+                osc: { title: 'The Office of Special Counsel', body: `<p>This office is the shield for federal whistleblowers—the brave employees who risk their careers to expose wrongdoing. It also prosecutes political corruption within the civil service.</p><p>By firing its head, the administration declared open war on whistleblowers. It created a culture of fear, ensuring that anyone who saw something would say nothing.</p>` },
+                wilcox: { title: 'Gwen Wilcox, NLRB Chair', body: `<p>Gwen Wilcox wasn't just a name on an org chart. She was the head of the National Labor Relations Board, the last line of defense for workers organizing against corporate giants. Her crime? Daring to file a complaint against SpaceX for violating labor laws.</p><p>The reward for her integrity was an illegal termination. Her firing didn't just silence a watchdog; it sent a clear message to every other regulator: stay in line, or you're next.</p>` },
+                fda: { title: 'FDA Staffers', body: `<p>These were scientists and medical experts, tasked with ensuring new medical devices like Elon Musk's Neuralink were safe for human trials. They were following rigorous scientific protocols.</p><p>Their abrupt termination sent a shockwave through the agency. The message was not subtle: expedite approvals for friends of the administration, or risk your career.</p>` },
+            };
+
+            // GENERATE DYNAMIC CONTENT
+            const cascadeContainer = document.getElementById('corruption-cascade-container');
+            for (let i = 1; i <= 100; i++) {
+                const item = document.createElement('div');
+                item.className = 'cascade-item';
+                item.dataset.id = i;
+                const data = corruptionData[i] || { summary: `Act #${i}`, details: `Details for act #${i}` };
+                item.innerHTML = `<div class="number">${i}</div><div class="summary">${data.summary}</div>`;
+                cascadeContainer.appendChild(item);
+            }
+
+            const victimFilesContainer = document.getElementById('victim-files');
+            const stampImgSrc = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBmaWxsPSIjYjMxOTQyIiBkPSJNNzkgMjFBNjIgNjIgMCAxIDAgMjEgNzlhNjIgNjIgMCAwIDAgNTggMHoiLz48dGV4dCB4PSI1MCUiIHk9IjYwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2ZmZiIgc3R5bGU9ImZvbnQ6Ym9sZCAzMnB4IHNhbnMtc2VyaWY7IHRyYW5zZm9ybTogcm90YXRlKC0yMGRlZyk7IGxldHRlci1zcGFjaW5nOiAycHg7Ij5DTEFTU0lGSUVEPC90ZXh0Pjwvc3ZnPg==';
+            for(const key in victimData) {
+                const card = document.createElement('div');
+                card.className = 'victim-card';
+                card.dataset.victim = key;
+                card.innerHTML = `<img class="stamp" src="${stampImgSrc}" alt="Classified"><h3 class="victim-title">${victimData[key].title}</h3><p>Click to read file...</p>`;
+                victimFilesContainer.appendChild(card);
+            }
+
+            const muskNodesContainer = document.getElementById('musk-nodes-container');
+            const muskNodesData = [
+                { text: "Fired EEOC Leaders", angle: 0 }, { text: "Gutted Labor Dept.", angle: 45 },
+                { text: "Pressured FAA Admin", angle: 90 }, { text: "$400M Tesla Deal", angle: 135 },
+                { text: "Dropped SpaceX Probe", angle: 180 }, { text: "Fired FDA Staff", angle: 225 },
+                { text: "Golden Dome Contract", angle: 270 }, { text: "Hid Disclosures", angle: 315 },
+            ];
+            muskNodesData.forEach(node => {
+                const el = document.createElement('div');
+                el.className = 'musk-node';
+                el.textContent = node.text;
+                const radius = 180;
+                const container = document.getElementById('musk-network');
+                const x = Math.cos(node.angle * Math.PI / 180) * radius + (container.offsetWidth / 2 - 50);
+                const y = Math.sin(node.angle * Math.PI / 180) * radius + (container.offsetHeight / 2 - 20);
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
+                container.appendChild(el);
+            });
+
+            // GSAP ANIMATIONS
+            gsap.registerPlugin(ScrollTrigger);
+
+            gsap.to('body', { backgroundColor: 'var(--background-end)', color: 'var(--text-end)', scrollTrigger: { trigger: '#the-deluge', start: 'top center', end: 'bottom bottom', scrub: 1.5 }});
+            gsap.to('#swamp-canvas', { opacity: 1, scrollTrigger: { trigger: '#the-deluge', start: 'top center', scrub: 1 }});
+            gsap.to('#hero-image', { className: 'cracked', scrollTrigger: { trigger: '#hero', start: 'bottom center', toggleActions: 'play none none reverse' }});
+            
+            gsap.utils.toArray('h2').forEach(h2 => {
+                ScrollTrigger.create({ trigger: h2, start: 'top 80%', onEnter: () => h2.classList.add('swamped'), onLeaveBack: () => h2.classList.remove('swamped') });
+            });
+
+            gsap.to('.cascade-item', { opacity: 1, scale: 1, stagger: 0.02, scrollTrigger: { trigger: '#corruption-cascade-container', start: 'top 80%', end: 'bottom bottom', scrub: 1 }});
+
+            gsap.utils.toArray('.infographic').forEach(el => {
+                gsap.from(el, { y: 100, opacity: 0, scrollTrigger: { trigger: el, start: 'top 85%' } });
+            });
+            
+            gsap.to('.decay-pillar', {
+                opacity: 1,
+                y: 0,
+                stagger: 0.2,
+                onComplete: function() { this.targets().forEach(el => el.classList.add('fallen')); },
+                scrollTrigger: { trigger: '.decay-chart', start: 'top 75%' }
+            });
+
+            // MODAL LOGIC
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const closeModal = document.querySelector('.close-button');
+
+            function openModal(title, body) {
+                modalTitle.textContent = title;
+                modalBody.innerHTML = body;
+                modal.classList.add('visible');
+            }
+
+            document.querySelectorAll('.cascade-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const id = el.dataset.id;
+                    const data = corruptionData[id];
+                    openModal(`Corruption Act #${id}`, `<p>${data.details}</p>`);
+                });
+            });
+
+            document.querySelectorAll('.victim-card').forEach(el => {
+                el.addEventListener('click', () => {
+                    const id = el.dataset.victim;
+                    const data = victimData[id];
+                    openModal(data.title, data.body);
+                });
+            });
+
+
+            closeModal.addEventListener('click', () => modal.classList.remove('visible'));
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('visible');
+            });
+
+            // CANVAS SWAMP EFFECT
+            const canvas = document.getElementById('swamp-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            
+            function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+
+            class Particle {
+                constructor() { this.reset(); this.y = Math.random() * canvas.height; }
+                reset() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = 0;
+                    this.size = Math.random() * 2 + 1;
+                    this.speedY = Math.random() * 0.5 + 0.2;
+                    this.opacity = Math.random() * 0.5 + 0.3;
+                }
+                update() { this.y += this.speedY; if (this.y > canvas.height) this.reset(); }
+                draw() {
+                    ctx.fillStyle = `rgba(74, 92, 74, ${this.opacity})`;
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+
+            for (let i = 0; i < 200; i++) particles.push(new Particle());
+            
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => { p.update(); p.draw(); });
+                requestAnimationFrame(animateParticles);
+            }
+            animateParticles();
+        });
+    </script>
+</body>
+</html>
